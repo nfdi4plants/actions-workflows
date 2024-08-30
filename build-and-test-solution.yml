@@ -1,0 +1,66 @@
+name: "Build and test solution"
+
+on:
+  workflow_call:
+    inputs: 
+      solution: 
+        description: "The solution file to build and test"
+        type: string
+        required: true
+        default: "arc-validate-package-registry.sln"
+      configuration:
+        type: string
+        description: "The configuration to build and test"
+        required: true
+        default: "Release"
+      checkout-submodules:
+        type: boolean
+        description: "whether to checkout submodules"
+        default: false
+      windows:
+        type: boolean
+        description: "wether to run on windows"
+        default: true
+      ubuntu:
+        type: boolean
+        description: "wether to run on ubuntu"
+        default: true
+      macos:
+        type: boolean
+        description: "wether to run on macos"
+        default: true
+
+jobs:
+  determine-strategy:
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: set-matrix
+        run: |
+          if [[ ${{ inputs.windows }} == true ]]; then win="windows-latest"; fi
+          if [[ ${{ inputs.ubuntu }} == true ]]; then ubu="ubuntu-latest"; fi
+          if [[ ${{ inputs.macos }} == true ]]; then mac="macos-latest"; fi
+          strategy="[${win:+\"$win\"}${ubu:+,\"$ubu\"}${mac:+,\"$mac\"}]"
+          echo "matrix={\"os\":$strategy}" >> $GITHUB_OUTPUT
+      - name: print strategy
+        run: echo "will run on ${{ steps.set-matrix.outputs.matrix }}"
+
+  build-and-test:
+    needs: determine-strategy
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix: ${{fromJson(needs.determine-strategy.outputs.matrix)}}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: ${{ inputs.checkout-submodules }}
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.x.x
+    - name: Build
+      run: dotnet build ${{ inputs.solution }} --configuration ${{ inputs.configuration }}
+    - name: Test
+      run: dotnet test ${{ inputs.solution }} --configuration ${{ inputs.configuration }} --no-build
