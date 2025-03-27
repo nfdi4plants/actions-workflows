@@ -7,17 +7,14 @@ on:
         description: "The solution file to build and test"
         type: string
         required: true
-        default: "arc-validate-package-registry.sln"
       dotnet-version:
         description: "The version of .NET to use"
         type: string
-        required: true
         default: "8.x.x"
       configuration:
         type: string
         description: "The configuration to build and test"
         required: true
-        default: "Release"
       checkout-submodules:
         type: boolean
         description: "whether to checkout submodules"
