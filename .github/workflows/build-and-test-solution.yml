@@ -1,4 +1,4 @@
-name: "Build and test solution"
+name: "Build and test .NET solution"
 
 on:
   workflow_call:
@@ -8,6 +8,11 @@ on:
         type: string
         required: true
         default: "arc-validate-package-registry.sln"
+      dotnet-version:
+        description: "The version of .NET to use"
+        type: string
+        required: true
+        default: "8.x.x"
       configuration:
         type: string
         description: "The configuration to build and test"
@@ -59,7 +64,7 @@ jobs:
     - name: Set up .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.x.x
+        dotnet-version: ${{ inputs.dotnet-version }}
     - name: Build
       run: dotnet build ${{ inputs.solution }} --configuration ${{ inputs.configuration }}
     - name: Test
